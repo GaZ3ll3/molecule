@@ -53,9 +53,21 @@ namespace bbfmm {
 
     class point : public basePoint {
     public:
-        point() : basePoint() {}
+        /*
+         * additional variables
+         */
+        int triangleId;
+        int sphereId;
 
-        point(scalar_t _x, scalar_t _y, scalar_t _z) : basePoint(_x, _y, _z) {}
+        point() : basePoint() {
+            triangleId = -1;
+            sphereId = -1;
+        }
+
+        point(scalar_t _x, scalar_t _y, scalar_t _z) : basePoint(_x, _y, _z) {
+            triangleId = -1;
+            sphereId = -1;
+        }
 
         ~point() {}
     };

@@ -57,6 +57,14 @@ inline scalar_t abs(scalar_t x) {
 
 int GMRES(const std::function<Vector(Vector &)> A, Vector &x, Vector &b, int m, int max_iter,
           scalar_t tol) {
+
+
+    /*
+     * for performance use
+     */
+    std::chrono::steady_clock::time_point begin;
+    std::chrono::steady_clock::time_point end;
+
     scalar_t resid;
     scalar_t _tol = tol;
     int _max_iter = max_iter;
@@ -71,6 +79,12 @@ int GMRES(const std::function<Vector(Vector &)> A, Vector &x, Vector &b, int m, 
     daxpy(-1.0, p, r);
 
     scalar_t beta = nrm2(r);
+
+
+    std::cout << "=======================================" << std::endl;
+    std::cout << "    iter    |  abs error    |   time   " << std::endl;
+
+    begin = std::chrono::steady_clock::now();
 
     if (normb == 0.0)
         normb = 1;
@@ -92,8 +106,12 @@ int GMRES(const std::function<Vector(Vector &)> A, Vector &x, Vector &b, int m, 
         s(0) = beta;
 
         for (i = 0; i < m && j <= _max_iter; i++, j++) {
+            end = std::chrono::steady_clock::now();
             std::cout << std::setw(6) << j << std::setw(20) << std::scientific << resid
+                      << std::setw(12) << std::fixed
+                      << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0
                       << std::endl;
+            begin = std::chrono::steady_clock::now();
             w = A(v[i]);
             for (k = 0; k <= i; k++) {
                 H(k, i) = ddot(w, v[k]);
@@ -116,6 +134,8 @@ int GMRES(const std::function<Vector(Vector &)> A, Vector &x, Vector &b, int m, 
                 _tol = resid;
                 _max_iter = j;
 
+                std::cout << "=============== CONVERGED =============" << std::endl;
+
                 delete[] v;
                 return 0;
             }
@@ -131,6 +151,8 @@ int GMRES(const std::function<Vector(Vector &)> A, Vector &x, Vector &b, int m, 
             _tol = resid;
             _max_iter = j;
 
+            std::cout << "=============== CONVERGED =============" << std::endl;
+
             delete[] v;
             return 0;
         }
@@ -138,6 +160,7 @@ int GMRES(const std::function<Vector(Vector &)> A, Vector &x, Vector &b, int m, 
 
     _tol = resid;
     delete[] v;
+    std::cout << "============= NOT CONVERGED ===========" << std::endl;
     return 1;
 }
 

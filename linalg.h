@@ -155,6 +155,7 @@ namespace bbfmm {
         memset(v._data, 0, v._row * sizeof(scalar_t));
     }
 
+
 /*
  * column majored matrix
  */
@@ -437,6 +438,15 @@ namespace bbfmm {
         cblas_dsbmv(CblasColMajor, CblasLower, A.row(), 0, alpha, A.data(), 1, x.data(), 1, beta, y, 1);
     }
 
+    scalar_t nrm2(Vector &x) {
+        assert(x.row() > 0);
+        return cblas_dnrm2(x.row(), x.data(), 1);
+    }
+
+    scalar_t ddot(Vector &x, Vector &y) {
+        assert(x.row() == y.row());
+        return cblas_ddot(x.row(), x.data(), 1, y.data(), 1);
+    }
 
 }
 

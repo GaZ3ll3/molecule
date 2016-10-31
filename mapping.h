@@ -100,7 +100,7 @@ inline void stdIcosahedron(vector<point> &vertices, vector<vector<int>> &faces) 
 /*
  * for a single unit ball
  */
-inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t> &weight) {
+inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t> &weight, vector<point> &triangle) {
     vector<point> vertices;
     vector<vector<int>> faces;
     stdIcosahedron(vertices, faces);
@@ -113,6 +113,8 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t
     scalar_t lambda = 1.0 / 3.0, mu = 1.0 / 3.0;
     point sub_a, sub_b, sub_c, sub_center, projection;
     scalar_t arc_a, arc_b, arc_c, _area;
+
+    int curId = 0;
     /*
      * iterate over each faces.
      */
@@ -156,6 +158,11 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t
                 _area = area(arc_a, arc_b, arc_c);
 
                 sources.push_back(projection);
+                sources[sources.size() - 1].triangleId = curId;
+                curId++;
+                triangle.push_back(sub_a);
+                triangle.push_back(sub_b);
+                triangle.push_back(sub_c);
                 weight.push_back(_area);
             }
         }
@@ -196,6 +203,11 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t
 
 
                 sources.push_back(projection);
+                sources[sources.size() - 1].triangleId = curId;
+                curId++;
+                triangle.push_back(sub_a);
+                triangle.push_back(sub_b);
+                triangle.push_back(sub_c);
                 weight.push_back(_area);
             }
         }
