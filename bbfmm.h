@@ -503,7 +503,6 @@ namespace bbfmm {
         }
 
         ~kernel() {}
-        //todo: add a reset function for re-use. Reduce the tree building time.
 
         void
         initialize(index_t _nChebyshev, vector<point> &_source, vector<point> &_target, Vector &_charge,
@@ -766,8 +765,26 @@ namespace bbfmm {
             kernelEval(sourceVec, targetVec, K);
         }
 
+        void reset(index_t rootId = 0) {
+            if (rootId < 0)
+                return;
+            node &n = t.dict[rootId];
 
-        void upPass(index_t rootId) {
+            n.chargeComputed = false;
+            n.scaledCnode.clear();
+            setValue(n.nodeCharge, 0.);
+            setValue(n.nodePotential, 0.);
+            setValue(n.potential, 0.);
+            setValue(n.R, 0.);
+            setValue(n.L, 0.);
+
+            for (index_t i = 0; i < 8; ++i) {
+                reset(n.child[i]);
+            }
+        }
+
+
+        void upPass(index_t rootId = 0) {
             node &n = t.dict[rootId];
             n.scaledCnode.clear();
             n.nodeCharge.resize(rank);
