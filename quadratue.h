@@ -128,4 +128,53 @@ singularIntegral(point &singular, vector<point> &vertices, int id, vector<scalar
 
 }
 
+
+inline double nearFieldIntegral(point& source, point& target, vector<point>& vertices, int id, vector<scalar_t>
+&radii, vector<point> &centers, std::function<double(point &, point &)> eval) {
+
+    point &pointA = vertices[3 * source.triangleId];
+    point &pointB = vertices[3 * source.triangleId + 1];
+    point &pointC = vertices[3 * source.triangleId + 2];
+
+    // all at leaf and not same triangles.
+    assert(source.triangleId >= 0);
+
+    scalar_t dist;
+    scalar_t scale;
+
+    point pc((pointC.x  -centers[id].x) * 2.0/3.0 +(pointA.x - centers[id].x) / 6.0 + (pointB.x  - centers[id].x)/ 6.0,
+             (pointC.y  -centers[id].y) * 2.0/3.0 +(pointA.y - centers[id].y) / 6.0 + (pointB.y  - centers[id].y)/ 6.0,
+             (pointC.z  -centers[id].z) * 2.0/3.0 +(pointA.z - centers[id].z) / 6.0 + (pointB.z  - centers[id].z)/ 6.0);
+
+    dist = norm(pc, centers[id]);
+    scale = radii[id]/dist;
+
+    pc.x = pc.x * scale + centers[id].x;
+    pc.y = pc.y * scale + centers[id].y;
+    pc.z = pc.z * scale + centers[id].z;
+
+    point pb((pointB.x  -centers[id].x) * 2.0/3.0 +(pointA.x - centers[id].x) / 6.0 + (pointC.x  - centers[id].x)/ 6.0,
+             (pointB.y  -centers[id].y) * 2.0/3.0 +(pointA.y - centers[id].y) / 6.0 + (pointC.y  - centers[id].y)/ 6.0,
+             (pointB.z  -centers[id].z) * 2.0/3.0 +(pointA.z - centers[id].z) / 6.0 + (pointC.z  - centers[id].z)/ 6.0);
+
+    dist = norm(pb, centers[id]);
+    scale = radii[id]/dist;
+
+    pb.x = pb.x * scale + centers[id].x;
+    pb.y = pb.y * scale + centers[id].y;
+    pb.z = pb.z * scale + centers[id].z;
+
+    point pa((pointA.x  -centers[id].x) * 2.0/3.0 +(pointC.x - centers[id].x) / 6.0 + (pointB.x  - centers[id].x)/ 6.0,
+             (pointA.y  -centers[id].y) * 2.0/3.0 +(pointC.y - centers[id].y) / 6.0 + (pointB.y  - centers[id].y)/ 6.0,
+             (pointA.z  -centers[id].z) * 2.0/3.0 +(pointC.z - centers[id].z) / 6.0 + (pointB.z  - centers[id].z)/ 6.0);
+
+    dist = norm(pa, centers[id]);
+    scale = radii[id]/dist;
+
+    pa.x = pa.x * scale + centers[id].x;
+    pa.y = pa.y * scale + centers[id].y;
+    pa.z = pa.z * scale + centers[id].z;
+
+    return 0.5 * (eval(pa, target) + eval(pb, target) + eval(pc, target) - eval(source, target));
+}
 #endif //MOLECULE_QUADRATUE_H

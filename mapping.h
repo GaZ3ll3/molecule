@@ -45,7 +45,7 @@ inline void quadrature(vector<point> &source, vector<scalar_t> weight, scalar_t 
 
 }
 
-inline void stdIcosahedron(vector<point> &vertices, vector<vector<int>> &faces) {
+inline void stdIcosahedron(vector<point> &vertices, vector<vector<int>> &faces, vector<vector<int>> &edges) {
     /*
      * define standard icosahedron
      */
@@ -53,6 +53,10 @@ inline void stdIcosahedron(vector<point> &vertices, vector<vector<int>> &faces) 
     if (faces.size() != 20) {
         faces.resize(20);
         for (int i = 0; i < 20; ++i) { faces[i].resize(3); }
+    }
+    if (edges.size() != 30) {
+        edges.resize(30);
+        for (int i= 0; i < 30; ++i) { edges[i].resize(2);}
     }
 
     scalar_t phi = 0.5 * (1.0 + sqrt(5.0));
@@ -95,15 +99,48 @@ inline void stdIcosahedron(vector<point> &vertices, vector<vector<int>> &faces) 
     faces[17] = {1, 4, 10};
     faces[18] = {1, 10, 11};
     faces[19] = {1, 11, 6};
+
+    unordered_set<int> edge_set;
+    for (int i = 0; i < faces.size(); ++i) {
+        if (faces[i][0] < faces[i][1]) {
+            edge_set.insert(faces[i][0] * 12 + faces[i][1]);
+        }
+        else {
+            edge_set.insert(faces[i][1] * 12 + faces[i][0]);
+        }
+        if (faces[i][1] < faces[i][2]) {
+            edge_set.insert(faces[i][1] * 12 + faces[i][2]);
+        }
+        else {
+            edge_set.insert(faces[i][2] * 12 + faces[i][1]);
+        }
+        if (faces[i][2] < faces[i][0]) {
+            edge_set.insert(faces[i][2] * 12 + faces[i][0]);
+        }
+        else {
+            edge_set.insert(faces[i][0] * 12 + faces[i][2]);
+        }
+    }
+
+    assert(edge_set.size() == 30);
+
+    int i = 0;
+    for (auto e : edge_set) {
+        edges[i][0] = e / 12;
+        edges[i][1] =  e % 12;
+        ++i;
+    }
 }
 
 /*
  * for a single unit ball
  */
-inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t> &weight, vector<point> &triangle) {
+inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<point>& targets, vector<scalar_t> &weight,
+                                  vector<point> &triangle) {
     vector<point> vertices;
     vector<vector<int>> faces;
-    stdIcosahedron(vertices, faces);
+    vector<vector<int>> edges;
+    stdIcosahedron(vertices, faces, edges);
     /*
      * subdivide each triangle into small equilateral triangles.
      */
@@ -112,6 +149,8 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t
     scalar_t alpha, beta, gamma;
     scalar_t lambda = 1.0 / 3.0, mu = 1.0 / 3.0;
     point sub_a, sub_b, sub_c, sub_center, projection;
+    point sub_center_a, sub_center_b, sub_center_c;
+    point projection_a, projection_b, projection_c;
     scalar_t arc_a, arc_b, arc_c, _area;
 
     int curId = 0;
@@ -145,25 +184,63 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t
                 sub_center.y = lambda * sub_a.y + mu * sub_b.y + (1 - lambda - mu) * sub_c.y;
                 sub_center.z = lambda * sub_a.z + mu * sub_b.z + (1 - lambda - mu) * sub_c.z;
 
+
+                sub_center_a.x = 2.0/3.0 * sub_a.x + 1.0/6.0 * sub_b.x + 1.0/6.0 * sub_c.x;
+                sub_center_a.y = 2.0/3.0 * sub_a.y + 1.0/6.0 * sub_b.y + 1.0/6.0 * sub_c.y;
+                sub_center_a.z = 2.0/3.0 * sub_a.z + 1.0/6.0 * sub_b.z + 1.0/6.0 * sub_c.z;
+
+                sub_center_b.x = 2.0/3.0 * sub_b.x + 1.0/6.0 * sub_a.x + 1.0/6.0 * sub_c.x;
+                sub_center_b.y = 2.0/3.0 * sub_b.y + 1.0/6.0 * sub_a.y + 1.0/6.0 * sub_c.y;
+                sub_center_b.z = 2.0/3.0 * sub_b.z + 1.0/6.0 * sub_a.z + 1.0/6.0 * sub_c.z;
+
+                sub_center_c.x = 2.0/3.0 * sub_c.x + 1.0/6.0 * sub_b.x + 1.0/6.0 * sub_a.x;
+                sub_center_c.y = 2.0/3.0 * sub_c.y + 1.0/6.0 * sub_b.y + 1.0/6.0 * sub_a.y;
+                sub_center_c.z = 2.0/3.0 * sub_c.z + 1.0/6.0 * sub_b.z + 1.0/6.0 * sub_a.z;
+
                 /*
                  * projection to unit sphere.
                  */
                 scalar_t dist = norm(sub_center, center);
                 projection = {sub_center.x / dist, sub_center.y / dist, sub_center.z / dist};
 
-                arc_a = angle(sub_b, sub_c, center);
-                arc_b = angle(sub_c, sub_a, center);
-                arc_c = angle(sub_a, sub_b, center);
-
-                _area = area(arc_a, arc_b, arc_c);
+                targets.push_back(projection);
+                targets[targets.size() - 1].triangleId = curId;
 
                 sources.push_back(projection);
                 sources[sources.size() - 1].triangleId = curId;
+
+                dist = norm(sub_center_a, center);
+                projection_a = {sub_center_a.x / dist, sub_center_a.y / dist, sub_center_a.z / dist};
+                sources.push_back(projection_a);
+                sources[sources.size() - 1].triangleId = curId;
+
+
+                dist = norm(sub_center_b, center);
+                projection_b = {sub_center_b.x / dist, sub_center_b.y / dist, sub_center_b.z / dist};
+                sources.push_back(projection_b);
+                sources[sources.size() - 1].triangleId = curId;
+
+                dist = norm(sub_center_c, center);
+                projection_c = {sub_center_c.x / dist, sub_center_c.y / dist, sub_center_c.z / dist};
+                sources.push_back(projection_c);
+                sources[sources.size() - 1].triangleId = curId;
+
+
+
                 curId++;
                 triangle.push_back(sub_a);
                 triangle.push_back(sub_b);
                 triangle.push_back(sub_c);
-                weight.push_back(_area);
+
+
+                arc_a = angle(sub_b, sub_c, center);
+                arc_b = angle(sub_c, sub_a, center);
+                arc_c = angle(sub_a, sub_b, center);
+                _area = area(arc_a, arc_b, arc_c);
+                weight.push_back(-0.5 * _area);
+                weight.push_back(0.5 * _area);
+                weight.push_back(0.5 * _area);
+                weight.push_back(0.5 * _area);
             }
         }
 
@@ -189,26 +266,61 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<scalar_t
                 sub_center.y = lambda * sub_a.y + mu * sub_b.y + (1 - lambda - mu) * sub_c.y;
                 sub_center.z = lambda * sub_a.z + mu * sub_b.z + (1 - lambda - mu) * sub_c.z;
 
+
+                sub_center_a.x = 2.0/3.0 * sub_a.x + 1.0/6.0 * sub_b.x + 1.0/6.0 * sub_c.x;
+                sub_center_a.y = 2.0/3.0 * sub_a.y + 1.0/6.0 * sub_b.y + 1.0/6.0 * sub_c.y;
+                sub_center_a.z = 2.0/3.0 * sub_a.z + 1.0/6.0 * sub_b.z + 1.0/6.0 * sub_c.z;
+
+                sub_center_b.x = 2.0/3.0 * sub_b.x + 1.0/6.0 * sub_a.x + 1.0/6.0 * sub_c.x;
+                sub_center_b.y = 2.0/3.0 * sub_b.y + 1.0/6.0 * sub_a.y + 1.0/6.0 * sub_c.y;
+                sub_center_b.z = 2.0/3.0 * sub_b.z + 1.0/6.0 * sub_a.z + 1.0/6.0 * sub_c.z;
+
+                sub_center_c.x = 2.0/3.0 * sub_c.x + 1.0/6.0 * sub_b.x + 1.0/6.0 * sub_a.x;
+                sub_center_c.y = 2.0/3.0 * sub_c.y + 1.0/6.0 * sub_b.y + 1.0/6.0 * sub_a.y;
+                sub_center_c.z = 2.0/3.0 * sub_c.z + 1.0/6.0 * sub_b.z + 1.0/6.0 * sub_a.z;
+
                 /*
                  * projection to unit sphere.
                  */
                 scalar_t dist = norm(sub_center, center);
                 projection = {sub_center.x / dist, sub_center.y / dist, sub_center.z / dist};
 
-                arc_a = angle(sub_b, sub_c, center);
-                arc_b = angle(sub_c, sub_a, center);
-                arc_c = angle(sub_a, sub_b, center);
-
-                _area = area(arc_a, arc_b, arc_c);
-
+                targets.push_back(projection);
+                targets[targets.size() - 1].triangleId = curId;
 
                 sources.push_back(projection);
                 sources[sources.size() - 1].triangleId = curId;
+
+                dist = norm(sub_center_a, center);
+                projection_a = {sub_center_a.x / dist, sub_center_a.y / dist, sub_center_a.z / dist};
+                sources.push_back(projection_a);
+                sources[sources.size() - 1].triangleId = curId;
+
+
+                dist = norm(sub_center_b, center);
+                projection_b = {sub_center_b.x / dist, sub_center_b.y / dist, sub_center_b.z / dist};
+                sources.push_back(projection_b);
+                sources[sources.size() - 1].triangleId = curId;
+
+                dist = norm(sub_center_c, center);
+                projection_c = {sub_center_c.x / dist, sub_center_c.y / dist, sub_center_c.z / dist};
+                sources.push_back(projection_c);
+                sources[sources.size() - 1].triangleId = curId;
+
                 curId++;
                 triangle.push_back(sub_a);
                 triangle.push_back(sub_b);
                 triangle.push_back(sub_c);
-                weight.push_back(_area);
+
+
+                arc_a = angle(sub_b, sub_c, center);
+                arc_b = angle(sub_c, sub_a, center);
+                arc_c = angle(sub_a, sub_b, center);
+                _area = area(arc_a, arc_b, arc_c);
+                weight.push_back(-0.5 * _area);
+                weight.push_back(0.5 * _area);
+                weight.push_back(0.5 * _area);
+                weight.push_back(0.5 * _area);
             }
         }
     }

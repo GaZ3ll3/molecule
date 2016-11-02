@@ -55,6 +55,8 @@ std::cout << std::setw(15)<< s << " "  << std::setprecision(5) << std::setw(8) <
 using std::unordered_set;
 using std::vector;
 using std::queue;
+using std::unordered_map;
+using std::unordered_set;
 using std::max;
 using std::min;
 
