@@ -152,6 +152,7 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<point>& 
     point sub_center_a, sub_center_b, sub_center_c;
     point projection_a, projection_b, projection_c;
     scalar_t arc_a, arc_b, arc_c, _area;
+    scalar_t _area_a, _area_b, _area_c;
 
     int curId = 0;
     /*
@@ -237,10 +238,37 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<point>& 
                 arc_b = angle(sub_c, sub_a, center);
                 arc_c = angle(sub_a, sub_b, center);
                 _area = area(arc_a, arc_b, arc_c);
-                weight.push_back(-0.5 * _area);
-                weight.push_back(0.5 * _area);
-                weight.push_back(0.5 * _area);
-                weight.push_back(0.5 * _area);
+
+                point mid_ab(0.5 * (sub_a.x + sub_b.x), 0.5 * (sub_a.y + sub_b.y), 0.5 * (sub_a.z + sub_b.z));
+                point mid_bc(0.5 * (sub_c.x + sub_b.x), 0.5 * (sub_c.y + sub_b.y), 0.5 * (sub_c.z + sub_b.z));
+                point mid_ca(0.5 * (sub_a.x + sub_c.x), 0.5 * (sub_a.y + sub_c.y), 0.5 * (sub_a.z + sub_c.z));
+
+                arc_a = angle(sub_a, mid_ab, center);
+                arc_b = angle(sub_a, mid_ca, center);
+                arc_c = angle(mid_ab, mid_ca, center);
+
+                _area_a = area(arc_a, arc_b, arc_c);
+
+                arc_a = angle(sub_b, mid_ab, center);
+                arc_b = angle(sub_b, mid_bc, center);
+                arc_c = angle(mid_ab, mid_bc, center);
+
+                _area_b = area(arc_a, arc_b, arc_c);
+
+
+                arc_a = angle(sub_c, mid_bc, center);
+                arc_b = angle(sub_c, mid_ca, center);
+                arc_c = angle(mid_ca, mid_bc, center);
+
+                _area_c = area(arc_a, arc_b, arc_c);
+
+                /*
+                 * todo: update weight
+                 */
+                weight.push_back(_area - 2 * _area_a - 2 * _area_b - 2 * _area_c);
+                weight.push_back(2 * _area_a);
+                weight.push_back(2 * _area_b);
+                weight.push_back(2 * _area_c);
             }
         }
 
@@ -317,10 +345,41 @@ inline void stdIcosahedronMapping(int N, vector<point> &sources, vector<point>& 
                 arc_b = angle(sub_c, sub_a, center);
                 arc_c = angle(sub_a, sub_b, center);
                 _area = area(arc_a, arc_b, arc_c);
-                weight.push_back(-0.5 * _area);
-                weight.push_back(0.5 * _area);
-                weight.push_back(0.5 * _area);
-                weight.push_back(0.5 * _area);
+
+
+
+                point mid_ab(0.5 * (sub_a.x + sub_b.x), 0.5 * (sub_a.y + sub_b.y), 0.5 * (sub_a.z + sub_b.z));
+                point mid_bc(0.5 * (sub_c.x + sub_b.x), 0.5 * (sub_c.y + sub_b.y), 0.5 * (sub_c.z + sub_b.z));
+                point mid_ca(0.5 * (sub_a.x + sub_c.x), 0.5 * (sub_a.y + sub_c.y), 0.5 * (sub_a.z + sub_c.z));
+
+                arc_a = angle(sub_a, mid_ab, center);
+                arc_b = angle(sub_a, mid_ca, center);
+                arc_c = angle(mid_ab, mid_ca, center);
+
+                _area_a = area(arc_a, arc_b, arc_c);
+
+                arc_a = angle(sub_b, mid_ab, center);
+                arc_b = angle(sub_b, mid_bc, center);
+                arc_c = angle(mid_ab, mid_bc, center);
+
+                _area_b = area(arc_a, arc_b, arc_c);
+
+
+                arc_a = angle(sub_c, mid_bc, center);
+                arc_b = angle(sub_c, mid_ca, center);
+                arc_c = angle(mid_ca, mid_bc, center);
+
+                _area_c = area(arc_a, arc_b, arc_c);
+
+
+
+                /*
+                 * todo: update weight
+                 */
+                weight.push_back(_area - 2 * _area_a - 2 * _area_b - 2 * _area_c);
+                weight.push_back(2 * _area_a);
+                weight.push_back(2 * _area_b);
+                weight.push_back(2 * _area_c);
             }
         }
     }
